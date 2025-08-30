@@ -4,6 +4,8 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ReactDiffViewer from "react-diff-viewer";
 
+const API_URL = "https://your-backend.onrender.com"; // 🔹 Replace with your Render backend URL
+
 function App() {
   const [code, setCode] = useState("");
   const [userPrompt, setUserPrompt] = useState("");
@@ -35,7 +37,7 @@ function App() {
     setFixedCode("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/openai", {
+      const res = await fetch(`${API_URL}/api/openai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, userPrompt: finalPrompt }),
@@ -146,4 +148,3 @@ function App() {
 }
 
 export default App;
-
