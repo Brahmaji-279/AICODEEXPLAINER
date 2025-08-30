@@ -4,7 +4,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ReactDiffViewer from "react-diff-viewer";
 
-const API_URL = "https://aicodeexplainerbackend-1.onrender.com"; // 🔹 Replace with your Render backend URL
+const API_URL = "https://aicodeexplainerbackend-4.onrender.com"; // 🔹 Replace with your Render backend URL
 
 function App() {
   const [code, setCode] = useState("");
