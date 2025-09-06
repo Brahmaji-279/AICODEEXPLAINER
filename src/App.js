@@ -1,19 +1,18 @@
-// frontend/src/App.jsx
 import { useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
-import ReactDiffViewer from "react-diff-viewer";
-
-const API_URL = "https://aicodeexplainerbackend-4.onrender.com"; // 🔹 Replace with your Render backend URL
+import ReactDiffViewer from "react-diff-viewer-continued";
+import Editor from "@monaco-editor/react";
 
 function App() {
   const [code, setCode] = useState("");
   const [userPrompt, setUserPrompt] = useState("");
   const [output, setOutput] = useState("");
-  const [fixedCode, setFixedCode] = useState(""); // for debugged code
-  const [mode, setMode] = useState(""); // explain/debug/complexity/custom
+  const [fixedCode, setFixedCode] = useState("");
+  const [mode, setMode] = useState("");
 
-  // Call backend API
+  const backendURL = process.env.REACT_APP_BACKEND_URL;
+
   const handleAskAI = async (action) => {
     if (!code.trim() && action !== "custom") {
       setOutput("⚠️ Please enter your code.");
@@ -24,12 +23,13 @@ function App() {
     if (action === "explain") {
       finalPrompt = "Explain this code in detail.";
     } else if (action === "debug") {
-      finalPrompt = "Debug this code and suggest fixes. Return only the corrected code.";
+      finalPrompt =
+        "Debug this code and suggest fixes. Return only the corrected code.";
     } else if (action === "complexity") {
       finalPrompt =
         "Find the time complexity (best, average, worst) of this code.";
     } else {
-      finalPrompt = userPrompt; // freeform prompt
+      finalPrompt = userPrompt;
     }
 
     setMode(action);
@@ -37,7 +37,7 @@ function App() {
     setFixedCode("");
 
     try {
-      const res = await fetch(`${API_URL}/api/openai`, {
+      const res = await fetch(`${backendURL}/api/openai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, userPrompt: finalPrompt }),
@@ -45,10 +45,9 @@ function App() {
 
       const data = await res.json();
 
-      // If debugging, store fixed code separately
       if (action === "debug") {
         setFixedCode(data.result || "");
-        setOutput(""); // clear normal output
+        setOutput("");
       } else {
         setOutput(data.result || "❌ No response from AI");
       }
@@ -59,90 +58,147 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-      <h1 className="text-4xl font-bold text-green-400 mb-6">
-        AI Code Explainer 🚀
+    <div className="min-h-screen flex flex-col items-center justify-start p-6 bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 text-white relative overflow-hidden">
+      {/* Title */}
+      <h1 className="text-4xl font-extrabold text-white mb-6 drop-shadow-lg">
+        🚀 AI Code Explainer
       </h1>
 
-      {/* Code Input Box */}
-      <textarea
-        className="w-full max-w-3xl h-48 p-4 rounded-xl bg-gray-800 border border-gray-700 text-green-200 font-mono focus:outline-none focus:ring-2 focus:ring-green-400"
-        placeholder="Paste your code here..."
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-      />
+      {/* Monaco Editor */}
+      <div className="w-full max-w-3xl h-80 rounded-3xl overflow-hidden backdrop-blur-md bg-white/10 border border-white/20 shadow-xl">
+        <Editor
+          height="100%"
+          defaultLanguage="javascript"
+          theme="vs-dark"
+          value={code}
+          onChange={(value) => setCode(value || "")}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 15,
+            fontLigatures: true,
+            automaticLayout: true,
+            autoClosingBrackets: "always",
+            autoClosingQuotes: "always",
+            autoIndent: "full",
+            formatOnType: true,
+            formatOnPaste: true,
+            tabSize: 2,
+            insertSpaces: true,
+            detectIndentation: true,
+            wordWrap: "on",
+          }}
+        />
+      </div>
 
-      {/* Freeform prompt input */}
-      <input
-        type="text"
-        className="w-full max-w-3xl mt-4 p-3 rounded-xl bg-gray-800 border border-gray-700 text-green-200 focus:outline-none focus:ring-2 focus:ring-green-400"
-        placeholder="Ask AI anything about your code..."
-        value={userPrompt}
-        onChange={(e) => setUserPrompt(e.target.value)}
-      />
-
-      {/* Buttons */}
-      <div className="flex gap-4 mt-4 flex-wrap justify-center">
+      {/* Suggested Actions */}
+      <div className="flex gap-3 mt-6 flex-wrap justify-center">
         <button
           onClick={() => handleAskAI("explain")}
-          className="px-6 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg transition-all duration-300"
+          className="px-5 py-2 rounded-full bg-gradient-to-r from-green-400 to-green-600 text-black font-semibold shadow-md hover:opacity-90 transition"
         >
           Explain
         </button>
         <button
           onClick={() => handleAskAI("debug")}
-          className="px-6 py-2 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-black font-semibold shadow-lg transition-all duration-300"
+          className="px-5 py-2 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-semibold shadow-md hover:opacity-90 transition"
         >
           Debug
         </button>
         <button
           onClick={() => handleAskAI("complexity")}
-          className="px-6 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-black font-semibold shadow-lg transition-all duration-300"
+          className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 text-black font-semibold shadow-md hover:opacity-90 transition"
         >
-          Find Time Complexity
-        </button>
-        <button
-          onClick={() => handleAskAI("custom")}
-          className="px-6 py-2 rounded-xl bg-purple-500 hover:bg-purple-600 text-black font-semibold shadow-lg transition-all duration-300"
-        >
-          Custom Prompt
+          Complexity
         </button>
       </div>
 
-      {/* Output Section */}
+      {/* AI Output with Avatar */}
       {output && (
-        <div className="mt-6 w-full max-w-3xl p-4 bg-gray-800 border border-gray-700 rounded-xl shadow-lg animate-fadeIn">
-          <h2 className="text-xl font-semibold mb-2 text-green-300">
-            AI Response:
-          </h2>
-          <p className="text-gray-200 whitespace-pre-line">{output}</p>
+        <div className="mt-6 w-full max-w-3xl flex items-start gap-3">
+          {/* Avatar */}
+          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center text-2xl shadow-lg">
+            🤖
+          </div>
+          {/* Chat bubble */}
+          <div className="p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg max-w-full">
+            <h2 className="text-lg font-semibold mb-2 text-green-200">
+              AI Response:
+            </h2>
+            <p className="text-gray-100 whitespace-pre-line">{output}</p>
+          </div>
         </div>
       )}
 
-      {/* Debugged Code with Highlighting */}
+      {/* Debugged Code */}
       {fixedCode && (
-        <div className="mt-6 w-full max-w-3xl p-4 bg-gray-800 border border-gray-700 rounded-xl shadow-lg animate-fadeIn">
-          <h2 className="text-xl font-semibold mb-2 text-yellow-300">
-            🔧 Debugged Code:
-          </h2>
+        <div className="mt-6 w-full max-w-3xl flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            {/* Avatar */}
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-2xl shadow-lg">
+              🔧
+            </div>
+            {/* Diff Viewer */}
+            <div className="flex-1 p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg">
+              <h2 className="text-lg font-semibold mb-2 text-yellow-200">
+                Debugged Code:
+              </h2>
+              <ReactDiffViewer
+                oldValue={code}
+                newValue={fixedCode}
+                splitView={true}
+                showLineNumbers={true}
+              />
+            </div>
+          </div>
 
-          {/* Diff View */}
-          <ReactDiffViewer
-            oldValue={code}
-            newValue={fixedCode}
-            splitView={true}
-            showLineNumbers={true}
-          />
-
-          {/* Syntax Highlighted final code */}
-          <h3 className="text-lg font-semibold mt-4 text-green-400">
-            ✅ Corrected Code:
-          </h3>
-          <SyntaxHighlighter language="javascript" style={dracula} showLineNumbers>
-            {fixedCode}
-          </SyntaxHighlighter>
+          {/* Highlighted Corrected Code */}
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center text-2xl shadow-lg">
+              ✅
+            </div>
+            <div className="flex-1 p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg">
+              <h3 className="text-lg font-semibold mb-2 text-green-300">
+                Corrected Code:
+              </h3>
+              <SyntaxHighlighter
+                language="javascript"
+                style={dracula}
+                showLineNumbers
+              >
+                {fixedCode}
+              </SyntaxHighlighter>
+            </div>
+          </div>
         </div>
       )}
+
+     {/* Bottom Input (Chat Style) */}
+<div className="fixed bottom-6 w-full flex justify-center px-4">
+  <div className="flex items-center w-full max-w-3xl p-3 rounded-2xl bg-white/25 backdrop-blur-lg border border-white/30 shadow-lg">
+    
+    {/* User Avatar */}
+    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center text-white font-bold mr-3">
+      👤
+    </div>
+
+    {/* Input Field */}
+    <input
+      type="text"
+      className="flex-grow px-4 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
+      placeholder="Ask AI anything about your code..."
+      value={userPrompt}
+      onChange={(e) => setUserPrompt(e.target.value)}
+    />
+
+    {/* Send Button */}
+    <button
+      onClick={() => handleAskAI("custom")}
+      className="ml-3 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold shadow-md hover:opacity-90 transition"
+    >
+      ➤
+    </button>
+  </div>
+</div>
     </div>
   );
 }
